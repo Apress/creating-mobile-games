@@ -1,0 +1,160 @@
+package net.frog_parrot.test;
+
+import javax.microedition.lcdui.*;
+import javax.microedition.m3g.*;
+
+/**
+ * This is a very simple example class to illustrate 3-D coordinates.
+ */
+public class DemoCanvas extends Canvas {
+
+  /**
+   * The information about where the scene is viewed from.
+   */
+  private Camera myCamera;
+
+  /**
+   * The background. (self-explanatory ;-) )
+   */
+  private Background myBackground = new Background();
+
+  /**
+   * The set of vertices.
+   */
+  private VertexBuffer myVertexBuffer;
+
+  /**
+   * The object that defines how to map the set of vertices into 
+   * a polygon.
+   */
+  private IndexBuffer myIndexBuffer;
+
+  /**
+   * Information on how the polygon should look in terms of 
+   * color, texture, shading, etc..
+   */
+  private Appearance myAppearance;
+
+  /**
+   * The list of vertices for the first example pyramid.
+   */
+  private short[] myVertices1 =  {
+    0, 0, 10,  10, 0, 0,  0, 10, 0,  0, -10, 0,  -10, 0, 0,  0, 0, 10,
+  };
+  /**
+   * The rule for how to piece together the vertices into a polygon.
+   */
+  private int[] myTriangleStrip1 = { 6 };
+
+  /**
+   * The list of vertices for the second example pyramid.
+   */
+  private short[] myVertices2 =  {
+    0, 0, 10,  10, 0, 0,  0, 10, 0,  0, -10, 0,  -10, 0, 0,  0, 0, 10,
+    0, -10, 0,  10, 0, 0,  0, 0, 10
+  };
+  /**
+   * The rule for how to piece together the vertices into a polygon.
+   */
+  private int[] myTriangleStrip2 = { 6, 3 };
+
+  /**
+   * Initialize everything.
+   */
+  public DemoCanvas() {
+    try {
+      // Create the camera object to define where the polygon is being
+      // viewed from and in what way:
+      myCamera = new Camera();
+      // Set the camera so that it will project the 3-D picture onto the 
+      // screen in perspective, with a vanishing point in the distance:
+      myCamera.setPerspective(60.0f, (float)getWidth() / (float)getHeight(),
+      			      1.0f, 1000.0f);
+
+      // Here we construct the VertexArray, which is a generic data 
+      // structure for storing collections of coordinate points:
+      int numVertices = myVertices2.length / 3;
+      // specify how many vertices, plus the fact that each vertex has 
+      // three coordinates, and each coordinate is coded on two bytes:
+      VertexArray va = new VertexArray(numVertices, 3, 2);
+      // set the data, starting from index 0:
+      va.set(0, numVertices, myVertices2);
+
+      // Now create a 3-D object of it.
+      // Here we could group a set of different VertexArrays, one 
+      // giving positions, one, giving colors, one giving normals, 
+      // but for simplicity we're only setting position coordinates:
+      myVertexBuffer = new VertexBuffer();
+      myVertexBuffer.setPositions(va, 1.0f, null);
+      // Color the polygon white:
+      myVertexBuffer.setDefaultColor(0xffffff);
+
+      // Here we define how to piece together the vertices into 
+      // a polygon:
+      myIndexBuffer = new TriangleStripArray(0, myTriangleStrip2);
+
+      // We want the appearance as simple as possible, so set the
+      // appearance to polygon mode:
+      PolygonMode pm = new PolygonMode();
+      pm.setShading(PolygonMode.SHADE_FLAT);
+      // Enable two-sided lighting so that the inside of the 
+      // polygon has a different color from the outside:
+      pm.setTwoSidedLightingEnable(true);
+      myAppearance = new Appearance();
+      myAppearance.setPolygonMode(pm);
+
+      // color the background black:
+      myBackground.setColor(0x000000);
+    } catch(Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+
+  /**
+   * Paint the graphics onto the screen.
+   */
+  protected void paint(Graphics g) {
+    try {
+      // Start by getting a handle to the Graphics3D
+      // object which does the work of projecting the 
+      // 3-D scene onto the 2-D screen (rendering):
+      Graphics3D g3d = Graphics3D.getInstance();
+      // Bind the Graphics3D object to the Graphics
+      // instance of the current canvas:
+      g3d.bindTarget(g);
+      // Clear the screen by painting it with the 
+      // background image:
+      g3d.clear(myBackground);
+
+      // Now set where we're viewing the scene from:
+      Transform cameraTransform = new Transform();
+      // We set the camera's X position and Y position to 0 
+      // so that we're looking straight down at the origin 
+      // of the x-y plane.  The Z coordinate tells how far 
+      // away the camera is -- increasing this value takes 
+      // you farther from the polygon, making it appear 
+      // smaller.  Try changing these values to view the 
+      // polygon from different places: 
+      cameraTransform.postTranslate(0.0f, 0.0f, 100.0f);
+      g3d.setCamera(myCamera, cameraTransform);
+
+      // Now set the location of the object.
+      // if this were an animation we would probably 
+      // translate or rotate it here:
+      Transform objectTransform = new Transform();
+      objectTransform.setIdentity();
+
+      // Now render:  (Yay!!! finally!!!)
+      g3d.render(myVertexBuffer, myIndexBuffer, myAppearance, objectTransform);
+
+      // Done, the canvas graphics can be freed now:
+      g3d.releaseTarget();
+
+    } catch(Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+}
+

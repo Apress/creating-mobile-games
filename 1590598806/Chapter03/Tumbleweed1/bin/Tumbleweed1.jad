@@ -1,0 +1,8 @@
+MIDlet-1: Tumbleweed1, /images/boot.png, net.frog_parrot.jump.Jump
+MIDlet-Jar-Size: 13893
+MIDlet-Jar-URL: Tumbleweed1.jar
+MIDlet-Name: Tumbleweed1
+MIDlet-Vendor: frog-parrot
+MIDlet-Version: 1.0
+MicroEdition-Configuration: CLDC-1.0
+MicroEdition-Profile: MIDP-2.0

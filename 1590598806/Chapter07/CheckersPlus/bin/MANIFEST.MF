@@ -1,0 +1,12 @@
+MIDlet-1: CheckersPlus, CheckersPlus.png, net.frog_parrot.checkers.Che
+ ckers
+MIDlet-Name: CheckersPlus
+MIDlet-Permissions: javax.microedition.io.Connector.file.read,javax.mi
+ croedition.io.Connector.file.write,javax.microedition.io.Connector.sm
+ s,javax.microedition.io.PushRegistry,javax.microedition.pim.ContactLi
+ st.read,javax.wireless.messaging.sms.receive,javax.wireless.messaging
+ .sms.send
+MIDlet-Vendor: frog-parrot
+MIDlet-Version: 1.0
+MicroEdition-Configuration: CLDC-1.0
+MicroEdition-Profile: MIDP-2.0

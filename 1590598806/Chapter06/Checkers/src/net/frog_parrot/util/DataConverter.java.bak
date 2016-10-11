@@ -1,0 +1,260 @@
+package net.frog_parrot.util;
+
+import java.io.*;
+
+/**
+ * This class is a set of simple utility functions that 
+ * can be used to convert standard data types to bytes 
+ * and back again.  It is used especially for data storage, 
+ * but also for sending and receiving data.
+ * 
+ * @author Carol Hamer
+ */
+public class DataConverter {
+
+  //--------------------------------------------------------
+  //  utilities to encode small, compactly-stored small ints.
+
+  /**
+   * Encodes a coordinate pair into a byte.
+   * WARNING: each of the two values MUST BE 
+   * between 0 and 15 (inclusive).
+   */
+  public static byte encodeCoords(int[] coordPair) {
+    byte retVal = (new Integer(coordPair[0])).byteValue();
+    retVal = (new Integer(retVal << 4)).byteValue();
+    retVal += (new Integer(coordPair[1])).byteValue();
+    return(retVal);
+  }
+
+  /**
+   * Encodes eight ints into a byte.
+   * WARNING: all values must be 0 or 1..
+   */
+  public static byte encode8(int[] eight, int offset) {
+    byte retVal = (new Integer(eight[offset])).byteValue();
+    for(int i = offset + 1; i < 8 + offset; i++) {
+      retVal = (new Integer(retVal << 1)).byteValue();
+      retVal += (new Integer(eight[i])).byteValue();
+    }
+    return(retVal);
+  }
+
+  //--------------------------------------------------------
+  //  utilities to decode small, compactly-stored small ints.
+
+  /**
+   * Turns a byte into a pair of coordinates.
+   */
+  public static int[] decodeCoords(byte coordByte) {
+    int[] retArray = new int[2];
+    retArray[1] = coordByte & 15;
+    retArray[0] = coordByte >> 4;
+    if(retArray[0] < 0) {
+      retArray[0] += 16;
+    }
+    return(retArray);
+  }
+
+  /**
+   * Turns a byte into eight ints.
+   */
+  public static int[] decode8(byte data) {
+    int[] retArray = new int[8];
+    int flag = 128;
+    for(int i = 0; i < 8; i++) {
+      if((flag & data) != 0) {
+	retArray[i] = 1;
+      } else {
+	retArray[i] = 0;
+      }
+      flag = flag >> 1;
+    }
+    if(retArray[7] < 0) {
+      retArray[7] += 2;
+    }
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    /*
+    // test garbage:
+    int i = 3279999;
+    System.out.println("DataConverter.decode8-->i = " + i);
+    //byte[] moreData = intToTwoBytes(i);
+    byte[] moreData = intToFourBytes(i);
+    i = parseInt(moreData);
+    System.out.println("DataConverter.decode8-->i = " + i);
+    i = -i;
+    System.out.println("DataConverter.decode8-->i = " + i);
+    //moreData = intToTwoBytes(i);
+    moreData = intToFourBytes(i);
+    i = parseInt(moreData);
+    System.out.println("DataConverter.decode8-->i = " + i);
+    */
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    return(retArray);
+  }
+
+
+  //--------------------------------------------------------
+  //  integer interpretation
+
+  /**
+   * Java appears to treat a byte as being signed when
+   * returning it as an int--this function converts from
+   * the signed value to the corresponding unsigned value.
+   */
+  public static int unsign(int signed) {
+    int retVal = signed;
+    if(retVal < 0) {
+      retVal += 256;
+    }
+    return(retVal);
+  }
+
+  /**
+   * Uses an input stream to convert an array of bytes to an int.
+   */
+  public static int streamParseInt(byte[] data) throws IOException {
+    DataInputStream stream 
+      = new DataInputStream(new ByteArrayInputStream(data));
+    int retVal = stream.readInt();
+    stream.close();
+    return(retVal);
+  }
+
+  /**
+   * Takes an array of bytes and returns an int.
+   */
+  public static int parseInt(byte[] data) {
+    int retVal = data[0];
+    for(int i = 1; i < data.length; i++) {
+      retVal = retVal << 8;
+      retVal += unsign(data[i]);
+    }
+    System.out.println("DataConverter.parseInt-->retVal = " + retVal);
+    return(retVal);
+  }
+  /*
+  public static int parseInt(byte[] data) {
+    int multiplier = 1;
+    int retVal = 0;
+    for(int i = data.length - 1; i > 0; i--) {
+      retVal += unsign(data[i]) * multiplier;
+      multiplier *= 256;
+    }
+    retVal += data[0] * multiplier;
+    return(retVal);
+  }
+*/
+
+  /**
+   * Uses an output stream to convert an int to four bytes.
+   */
+  public static byte[] streamIntToFourBytes(int i) throws IOException {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream(4);
+    DataOutputStream dos = new DataOutputStream(baos);
+    dos.writeInt(i);
+    byte[] retArray = baos.toByteArray();
+    baos.close();
+    return(retArray);
+  }
+
+  /**
+   * Takes an arbitrary int and returns
+   * an array of four bytes.
+   */
+  public static byte[] intToFourBytes(int i) {
+    byte[] fourBytes = new byte[4];
+    System.out.println("DataConverter.intToTwoBytes-->i = " + i);
+    fourBytes[3] = (new Integer(i)).byteValue();
+    System.out.println("DataConverter.intToTwoBytes-->fourBytes[3] = " + fourBytes[3]);
+    i = i >> 8;
+    fourBytes[2] = (new Integer(i)).byteValue();
+    System.out.println("DataConverter.intToTwoBytes-->fourBytes[2] = " + fourBytes[2]);
+    i = i >> 8;
+    fourBytes[1] = (new Integer(i)).byteValue();
+    System.out.println("DataConverter.intToTwoBytes-->fourBytes[1] = " + fourBytes[1]);
+    i = i >> 8;
+    fourBytes[0] = (new Integer(i)).byteValue();
+    System.out.println("DataConverter.intToTwoBytes-->fourBytes[0] = " + fourBytes[0]);
+    return(fourBytes);
+  }
+
+
+  /**
+   * Takes an int between -32768 and 32767 and returns
+   * an array of two bytes.
+   */
+  public static byte[] intToTwoBytes(int i) {
+    byte[] twoBytes = new byte[2];
+    //int loByte = i % 256;
+    //int loByte = i;
+    //System.out.println("DataConverter.intToTwoBytes-->loByte = " + loByte);
+    twoBytes[1] = (new Integer(i)).byteValue();
+    System.out.println("DataConverter.intToTwoBytes-->twoBytes[1] = " + twoBytes[1]);
+    //int hiByte = i >> 8;
+    i = i >> 8;
+    //System.out.println("DataConverter.intToTwoBytes-->hiByte = " + hiByte);
+    twoBytes[0] = (new Integer(i)).byteValue();
+    System.out.println("DataConverter.intToTwoBytes-->twoBytes[0] = " + twoBytes[0]);
+    return(twoBytes);
+  }
+  /*
+  public static byte[] intToTwoBytes(int i) {
+    byte[] twoBytes = new byte[2];
+    int loByte = i % 256;
+    System.out.println("DataConverter.intToTwoBytes-->loByte = " + loByte);
+    //twoBytes[1] = intToByte(loByte);
+    twoBytes[1] = (new Integer(loByte)).byteValue();
+    System.out.println("DataConverter.intToTwoBytes-->twoBytes[1] = " + twoBytes[1]);
+    int hiByte = i / 256;
+    System.out.println("DataConverter.intToTwoBytes-->hiByte = " + hiByte);
+    // testing with -411, subtracting 1 helped...but not for 411...
+    if(i < 0) {
+      hiByte--;
+    } 
+    twoBytes[0] = (new Integer(hiByte)).byteValue();
+    System.out.println("DataConverter.intToTwoBytes-->twoBytes[0] = " + twoBytes[0]);
+    return(twoBytes);
+  }
+*/
+  //--------------------------------------------------------
+  //  testing
+
+  /**
+   *
+   */
+  public static void main(String args[]) {
+    try {
+      int i = Integer.parseInt(args[0]);
+      System.out.println("DataConverter.main-->i = " + i);
+      byte[] data = intToFourBytes(i);
+      byte[] moreData = streamIntToFourBytes(i);
+      for(int k = moreData.length - 1; k >= 0; k--) {
+	System.out.println("DataConverter.main-->streamversion[" + k + "] = "  
+			   + moreData[k]);
+      }
+      //byte[] data = intToTwoBytes(i);
+      i = parseInt(data);
+      int j = streamParseInt(moreData);
+      System.out.println("DataConverter.main-->i = " + i);
+      System.out.println("DataConverter.main-->streamversion = " + j);
+      i = -i;
+      System.out.println("DataConverter.main-->i = " + i);
+      data = intToFourBytes(i);
+      //data = intToTwoBytes(i);
+      moreData = streamIntToFourBytes(i);
+      for(int k = moreData.length - 1; k >= 0; k--) {
+	System.out.println("DataConverter.main-->streamversion[" + k + "] = "  
+			   + moreData[k]);
+      }
+      i = parseInt(data);
+      j = streamParseInt(moreData);
+      System.out.println("DataConverter.main-->streamversion = " + j);
+      System.out.println("DataConverter.main-->i = " + i);
+    } catch(Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+
+}
